@@ -1,5 +1,6 @@
 import numpy as np
 from skimage import io
+from cv2 import imread
 def dx(max,min):
     return max-min
 
@@ -27,7 +28,7 @@ def iterations(kanal, iter_num, a, dx):
     kanal_n = np.copy(kanal)
     for i in range(s):
         
-        temp = chaos_function(a, iter_num, kanal_n[i-1]) + kanal[i] #   +kanal[i-1]
+        temp = chaos_function(a, iter_num, kanal_n[i-1]) + kanal[i] 
         kanal_n[i] = temp if temp<dx else temp-dx
               
     return kanal_n
@@ -40,30 +41,22 @@ def reverse_iterations(kanal, iter_num, a , dx, mini):
         
         temp = kanal[i] - chaos_function(a, iter_num, kanal_n[i-1])
         
-        kanal_n[i] = temp if temp>mini else temp+dx #tutaj chyba i-1 ale jak cos to dac i
+        kanal_n[i] = temp if temp>mini else temp+dx 
         
         
     return kanal_n
 
-def encrypt(path):
-        img = io.imread(path)
+def encrypt(path, a = 3.9, maks = 0.975, mini = 0.095062, iter_i = 3, iter_j = 1):
+        img = imread(path)
 
         x, y, z = img.shape
         img = img.reshape(x*y, z)
 
         red = img[...,0]
-
-        maks = 0.975
-        mini = 0.095062
-        iter_j = 3
-        iter_i = 10
-        a = 3.9
-
+        
         red_c = x_c(mini, dx(maks, mini), red)
 
-
-
-        red_norm = np.copy(red_c)
+        red_norm = red_c
         for i in range(iter_j):
 
             red_norm = normalise(red_norm, maks, mini)
@@ -71,6 +64,21 @@ def encrypt(path):
         return red_norm.reshape(x, y, 1)
 
 
+
+def decrypt(red_norm, a = 3.9, maks = 0.975, mini = 0.095062, iter_i = 3, iter_j = 1):
+
+    red_inv = red_norm
+    x, y, z = red_inv.shape
+    red_inv = red_inv.reshape(x*y, z)
+    for i in range(iter_j):
+        red_inv = reverse_iterations(red_inv, iter_i, a, maks, mini)
+        red_inv = reverse_normalise(red_inv, maks, mini)
+
+
+
+    red = x_c_reverse(mini, dx(maks, mini), red_inv)
+
+    return red.reshape(x, y, 1)
 
 
 
